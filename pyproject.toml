@@ -7,4 +7,6 @@ dependencies = [
     "livekit-plugins-noise-cancellation>=0.2.5",
     "python-dotenv>=1.2.2",
     "torch>=2.11.0",
+    "torchaudio>=2.11.0",
+    "torchvision>=0.26.0",
 ]
