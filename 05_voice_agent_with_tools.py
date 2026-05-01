@@ -116,6 +116,57 @@ class Assistant(Agent):
             except Exception as e:
                 logging.error(f"Unexpected error in lookup_weather: {e}")
                 raise ToolError("An unexpected error occurred while looking up the weather.") 
+            
+    @function_tool
+    async def check_server_status(self, context:RunContext, service_name:str) -> str:
+        logging.info(f"Tool called: checking status for {service_name}")
+
+        if "email" in service_name.lower() or "exchange" in service_name.lower():
+            return f"The {service_name} is currently down for maintenance. Estimated recovery: 20 minutes."
+        
+        return f"The {service_name} is fully operational and reporting no issues."
+    
+    @function_tool
+    async def reset_password(self, context: RunContext, employee_username: str) -> str:
+        """Trigger a password reset link to be sent to an employee's secondary email."""
+        logging.info(f"Tool called: resetting password for {employee_username}")
+        return f"Done! A secure password reset link has been sent to the recovery email for {employee_username}."
+    
+    @function_tool
+    async def process_payment(self, context: RunContext, amount: float, account_id: str) -> str:
+        """Process a payment for a specific account."""
+        
+        # Prevent the tool from being cancelled if the user speaks
+        context.disallow_interruptions()
+        
+        logging.info(f"Tool called: processing payment of ${amount} for account {account_id}. Simulating network delay...")
+        
+        # Simulate a slow external API call (e.g., reaching out to Stripe or PayPal)
+        await asyncio.sleep(5)
+        
+        return f"Successfully processed the payment of ${amount} for account {account_id}."
+    
+    @function_tool()
+    async def search_knowledge_base(self, context: RunContext, query: str) -> str:
+        """Search the internal IT knowledge base for troubleshooting articles."""
+        
+        # Send a verbal status update to the user after a short delay
+        async def _speak_status_update(delay: float = 0.5):
+            await asyncio.sleep(delay)
+            context.speak("Still searching for the best solution, please hold on a moment...")
+        
+        status_update_task = asyncio.create_task(_speak_status_update(0.5))
+
+        logging.info(f"Tool called: searching for '{query}'...")
+        
+        # Simulate a variable-length search operation
+        await asyncio.sleep(8) 
+        result = f"Found relevant articles for '{query}'. Suggest rebooting the affected system."
+        
+        # Cancel status update if search completed before the timeout
+        status_update_task.cancel()
+        
+        return result
 
 # --- Step 3: Configuring the Agent Server ---
 # Now we instantiate our `AgentServer`. This object is responsible for managing 
@@ -157,7 +208,7 @@ async def entrypoint(ctx: JobContext):
     # 2. Define LLM Fallback (OpenAI -> Google Gemini)
     resilient_llm = llm.FallbackAdapter(
         [
-            inference.LLM(model="openai/gpt-4.1-mini"),
+            inference.LLM(model="openai/gpt-4o-mini"),
             inference.LLM(model="google/gemini-2.5-flash"),
         ]
     )
